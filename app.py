@@ -33,7 +33,7 @@ app.config["INVITE_CODE"] = os.environ.get("TEAM_INVITE_CODE")
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("COOKIE_SECURE") == "1"
 
-MAX_KG = 600  # sanity ceiling so typos like 5000 get rejected
+MAX_KG = 600  # typos like 5000 get rejected, only for validation of SBD and not a limit for a lifter's total
 LB_PER_KG = 2.20462
 UNITS = ("kg", "lb")
 

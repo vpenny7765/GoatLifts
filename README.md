@@ -1,13 +1,13 @@
 # GoatLifts
 
-A powerlifting progress tracker for a club team. Each lifter logs squat, bench, and deadlift sessions, sees their PRs and progression, and checks where they stand on the team PR board.
+A powerlifting progress tracker for the WPI Powerlifting club. Each lifter logs squat, bench, and deadlift sessions, sees their PRs and progression, and checks where they stand on the team PR board.
 
 **Live:** https://vp7765.pythonanywhere.com
 
 ## Features
 
 - **Accounts:** sign-up gated by a team invite code, hashed passwords, session login/logout
-- **Private history:** each lifter only sees and edits their own sessions
+- **Private history:** each lifter only sees and edits their own sessions, though PRs are available to view for all users
 - **Team PR board:** everyone's best squat, bench, deadlift, and total, ranked by total
 - **kg or lb per lifter:** weights are stored in kg; entry and display follow each lifter's choice
 - Server-side input validation; total calculated automatically
@@ -107,7 +107,8 @@ Note: on a free Render instance the filesystem is ephemeral, so the SQLite file 
 
 ## Possible next steps
 
-- Password reset and an admin role for club officers
-- Estimated 1RM calculations and per-set logging
+- Password reset and an admin role for club executives
+- Estimated 1RM calculations and per-set logging, e1rm graphs will be separate from true PR graphs.
 - Rate limiting on login attempts
 - Postgres for durable hosting
+- Extend leaderboards to rank users on their Squat, Bench, and Deadlift along with sorting by Gender and DOTs
