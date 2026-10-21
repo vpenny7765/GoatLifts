@@ -1,137 +1,223 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>GoatLifts</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  </head>
-  <body>
-    <h1>GoatLifts</h1>
-    <p class="tagline">Track your powerlifting progression over time.</p>
-
-    <h2>Log a Session</h2>
+{% extends "base.html" %}
+{% block content %}
+  <section class="panel">
+    <h2>Log a session</h2>
     {% if errors %}
       <ul class="errors">
-        {% for error in errors %}
-          <li>{{ error }}</li>
-        {% endfor %}
+        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
       </ul>
     {% endif %}
     <form action="{{ url_for('log_lift') }}" method="POST" class="log-form">
-      <label>Name
-        <input type="text" name="name" maxlength="60" required
-               placeholder="First and last name" value="{{ form.get('name', '') }}">
-      </label>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <label>Date
         <input type="date" id="date" name="date" value="{{ form.get('date') or today }}">
       </label>
-      <label>Squat (kg)
-        <input type="number" name="squat" step="0.5" min="0.5" max="600" required
-               value="{{ form.get('squat', '') }}">
-      </label>
-      <label>Bench (kg)
-        <input type="number" name="bench" step="0.5" min="0.5" max="600" required
-               value="{{ form.get('bench', '') }}">
-      </label>
-      <label>Deadlift (kg)
-        <input type="number" name="deadlift" step="0.5" min="0.5" max="600" required
-               value="{{ form.get('deadlift', '') }}">
-      </label>
+      {% for key, label in (('squat', 'Squat'), ('bench', 'Bench'), ('deadlift', 'Deadlift')) %}
+        <label>{{ label }} ({{ unit }})
+          <input type="number" name="{{ key }}" step="0.5" min="0.5" required inputmode="decimal"
+                 value="{{ form.get(key, '') }}">
+        </label>
+      {% endfor %}
       <button type="submit">Log it</button>
     </form>
     <p class="hint">Total is calculated for you (squat + bench + deadlift).</p>
+  </section>
 
-    {% if selected %}
-      <div class="lifter-bar">
-        <h2>{{ selected }}</h2>
-        {% if lifters|length > 1 %}
-          <form method="GET" action="{{ url_for('home') }}">
-            <select name="lifter" onchange="this.form.submit()" aria-label="Choose lifter">
-              {% for lifter in lifters %}
-                <option value="{{ lifter }}" {% if lifter|lower == selected|lower %}selected{% endif %}>{{ lifter }}</option>
-              {% endfor %}
-            </select>
-          </form>
+  {% if prs %}
+    <div class="pr-grid">
+      {% for key, label in (('squat', 'Squat'), ('bench', 'Bench'), ('deadlift', 'Deadlift'), ('total', 'Best total')) %}
+        <div class="pr-card {{ 'pr-total' if key == 'total' }}">
+          <span class="pr-label">{{ label }}</span>
+          <span class="pr-value">{{ prs[key]|weight(unit) }}<small>{{ unit }}</small></span>
+        </div>
+      {% endfor %}
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Progression</h2>
+        {% if history|length >= 2 %}
+          <div class="segmented" role="tablist" aria-label="Chart view">
+            {% for key, label in (('total', 'Total'), ('squat', 'Squat'), ('bench', 'Bench'), ('deadlift', 'Deadlift'), ('all', 'All lifts')) %}
+              <button type="button" role="tab" data-view="{{ key }}"
+                      aria-selected="{{ 'true' if key == 'total' else 'false' }}">{{ label }}</button>
+            {% endfor %}
+          </div>
         {% endif %}
       </div>
-
-      <div class="pr-grid">
-        <div class="pr-card"><span class="pr-label">Squat PR</span><span class="pr-value">{{ prs.squat|kg }}</span></div>
-        <div class="pr-card"><span class="pr-label">Bench PR</span><span class="pr-value">{{ prs.bench|kg }}</span></div>
-        <div class="pr-card"><span class="pr-label">Deadlift PR</span><span class="pr-value">{{ prs.deadlift|kg }}</span></div>
-        <div class="pr-card pr-total"><span class="pr-label">Best Total</span><span class="pr-value">{{ prs.total|kg }}</span></div>
-      </div>
-      <p class="hint">All values in kg.</p>
-
-      <h2>Progression</h2>
       {% if history|length >= 2 %}
-        <div class="chart-wrap"><canvas id="progress-chart"></canvas></div>
+        <p class="chart-summary" id="chart-summary"></p>
+        <div class="chart-wrap"><canvas id="progress-chart" aria-label="Progression chart"></canvas></div>
       {% else %}
-        <p class="hint">Log at least two sessions to see your progression chart.</p>
+        <p class="empty">Log at least two sessions to see your progression chart.</p>
       {% endif %}
+    </section>
 
+    <section class="panel">
       <h2>History</h2>
-      <table>
-        <thead>
-          <tr><th>Date</th><th>Squat</th><th>Bench</th><th>Deadlift</th><th>Total</th><th></th></tr>
-        </thead>
-        <tbody>
-          {% for row in history %}
-            <tr>
-              <td>{{ row.logged_on }}</td>
-              <td>{{ row.squat|kg }}</td>
-              <td>{{ row.bench|kg }}</td>
-              <td>{{ row.deadlift|kg }}</td>
-              <td>{{ row.total|kg }}</td>
-              <td>
-                <form action="{{ url_for('delete_entry', entry_id=row.id) }}" method="POST"
-                      onsubmit="return confirm('Delete this entry?');">
-                  <button type="submit" class="delete" aria-label="Delete entry">&times;</button>
-                </form>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <p class="hint">No sessions logged yet. Add your first one above.</p>
-    {% endif %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Date</th><th class="num">Squat</th><th class="num">Bench</th><th class="num">Deadlift</th><th class="num">Total ({{ unit }})</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for row in history %}
+              <tr>
+                <td>{{ row.logged_on }}</td>
+                <td class="num">{{ row.squat|weight(unit) }}</td>
+                <td class="num">{{ row.bench|weight(unit) }}</td>
+                <td class="num">{{ row.deadlift|weight(unit) }}</td>
+                <td class="num strong">{{ row.total|weight(unit) }}</td>
+                <td>
+                  <form action="{{ url_for('delete_lift', lift_id=row.id) }}" method="POST"
+                        onsubmit="return confirm('Delete this entry?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="delete" aria-label="Delete entry">&times;</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% else %}
+    <p class="empty">No sessions logged yet. Add your first one above.</p>
+  {% endif %}
+{% endblock %}
 
+{% block scripts %}
+  <script>
+    // Default the date to the viewer's local day (the server only knows UTC).
+    (function () {
+      var dateInput = document.getElementById('date');
+      if (dateInput && !{{ 'true' if form.get('date') else 'false' }}) {
+        dateInput.value = new Date().toLocaleDateString('en-CA');
+      }
+    })();
+  </script>
+
+  {% if chart and history|length >= 2 %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
-      // Default the date to the viewer's local day (the server only knows UTC).
       (function () {
-        var dateInput = document.getElementById('date');
-        if (dateInput && !{{ 'true' if form.get('date') else 'false' }}) {
-          dateInput.value = new Date().toLocaleDateString('en-CA');
-        }
-      })();
-    </script>
-
-    {% if chart and history|length >= 2 %}
-      <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-      <script>
         var data = {{ chart | tojson }};
-        Chart.defaults.color = '#bbbbbb';
-        Chart.defaults.borderColor = '#2a2a2a';
-        new Chart(document.getElementById('progress-chart'), {
+        var unit = data.unit;
+        var LIFTS = {
+          total:    { label: 'Total',    color: '#ff4d4d' },
+          squat:    { label: 'Squat',    color: '#ff9f43' },
+          bench:    { label: 'Bench',    color: '#54a0ff' },
+          deadlift: { label: 'Deadlift', color: '#1dd1a1' }
+        };
+        var fmtShort = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+        var fmtLong = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        function parse(iso) { var p = iso.split('-'); return new Date(p[0], p[1] - 1, p[2]); }
+        var labels = data.dates.map(function (d) { return fmtShort.format(parse(d)); });
+
+        // Mark each point that set a new best for that lift.
+        function prFlags(values) {
+          var best = -Infinity;
+          return values.map(function (v) { var pr = v > best; if (pr) best = v; return pr; });
+        }
+
+        function fade(ctx, color) {
+          var area = ctx.chart.chartArea;
+          if (!area) return color + '33';
+          var g = ctx.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+          g.addColorStop(0, color + '55');
+          g.addColorStop(1, color + '00');
+          return g;
+        }
+
+        function dataset(key, filled) {
+          var lift = LIFTS[key];
+          var prs = prFlags(data[key]);
+          return {
+            label: lift.label,
+            data: data[key],
+            borderColor: lift.color,
+            backgroundColor: filled ? function (ctx) { return fade(ctx, lift.color); } : lift.color,
+            fill: filled,
+            borderWidth: 2.5,
+            tension: 0.35,
+            pointRadius: prs.map(function (p) { return p ? 5 : 3; }),
+            pointHoverRadius: 7,
+            pointBackgroundColor: prs.map(function (p) { return p ? lift.color : '#0d0d0f'; }),
+            pointBorderColor: lift.color,
+            pointBorderWidth: 2,
+            prFlags: prs
+          };
+        }
+
+        Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+        Chart.defaults.color = '#9a9aa3';
+
+        var chart = new Chart(document.getElementById('progress-chart'), {
           type: 'line',
-          data: {
-            labels: data.labels,
-            datasets: [
-              { label: 'Squat',    data: data.squat,    borderColor: '#cc0909', backgroundColor: '#cc0909', tension: 0.2 },
-              { label: 'Bench',    data: data.bench,    borderColor: '#e8a020', backgroundColor: '#e8a020', tension: 0.2 },
-              { label: 'Deadlift', data: data.deadlift, borderColor: '#4aa3ff', backgroundColor: '#4aa3ff', tension: 0.2 },
-              { label: 'Total',    data: data.total,    borderColor: '#ffffff', backgroundColor: '#ffffff', borderDash: [6, 4], tension: 0.2 }
-            ]
-          },
+          data: { labels: labels, datasets: [dataset('total', true)] },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { y: { title: { display: true, text: 'kg' } } }
+            interaction: { mode: 'index', intersect: false },
+            animation: { duration: 450 },
+            layout: { padding: { top: 8, right: 8 } },
+            scales: {
+              x: { grid: { display: false }, border: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 16 } },
+              y: {
+                grace: '8%',
+                grid: { color: 'rgba(255,255,255,0.06)' },
+                border: { display: false },
+                ticks: { callback: function (v) { return v + ' ' + unit; }, maxTicksLimit: 6 }
+              }
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#1b1b20',
+                borderColor: '#2e2e36',
+                borderWidth: 1,
+                padding: 12,
+                boxPadding: 4,
+                usePointStyle: true,
+                callbacks: {
+                  title: function (items) { return fmtLong.format(parse(data.dates[items[0].dataIndex])); },
+                  label: function (item) {
+                    var pr = item.dataset.prFlags[item.dataIndex] ? '  ★ PR' : '';
+                    return ' ' + item.dataset.label + ': ' + item.formattedValue + ' ' + unit + pr;
+                  }
+                }
+              }
+            }
           }
         });
-      </script>
-    {% endif %}
-  </body>
-</html>
+
+        var summary = document.getElementById('chart-summary');
+        function describe(key) {
+          var keys = key === 'all' ? ['squat', 'bench', 'deadlift'] : [key];
+          return keys.map(function (k) {
+            var v = data[k], change = v[v.length - 1] - v[0];
+            var sign = change > 0 ? '+' : '';
+            return '<span style="color:' + LIFTS[k].color + '">' + LIFTS[k].label + '</span> ' +
+                   sign + (Math.round(change * 10) / 10) + ' ' + unit;
+          }).join(' &nbsp;·&nbsp; ') + ' <span class="muted">since ' + labels[0] + '</span>';
+        }
+
+        function show(key) {
+          chart.data.datasets = key === 'all'
+            ? ['squat', 'bench', 'deadlift'].map(function (k) { return dataset(k, false); })
+            : [dataset(key, true)];
+          chart.update();
+          summary.innerHTML = describe(key);
+          document.querySelectorAll('.segmented button').forEach(function (b) {
+            b.setAttribute('aria-selected', b.dataset.view === key ? 'true' : 'false');
+          });
+        }
+
+        document.querySelectorAll('.segmented button').forEach(function (b) {
+          b.addEventListener('click', function () { show(b.dataset.view); });
+        });
+        show('total');
+      })();
+    </script>
+  {% endif %}
+{% endblock %}

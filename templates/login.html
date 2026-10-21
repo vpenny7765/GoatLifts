@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Log in · GoatLifts{% endblock %}
+{% block content %}
+  <section class="auth-card">
+    <h1>Log in</h1>
+    <p class="hint">Track your progression and see where you stand on the team board.</p>
+    {% if error %}
+      <ul class="errors"><li>{{ error }}</li></ul>
+    {% endif %}
+    <form method="POST" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Username
+        <input type="text" name="username" autocomplete="username" required autofocus
+               value="{{ form.get('username', '') }}">
+      </label>
+      <label>Password
+        <input type="password" name="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Log in</button>
+    </form>
+    <p class="hint">New to the club? <a href="{{ url_for('register') }}">Create an account</a></p>
+  </section>
+{% endblock %}

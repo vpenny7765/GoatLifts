@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}GoatLifts{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="{{ url_for('home') }}">GoatLifts</a>
+      {% if user %}
+        <nav>
+          <a href="{{ url_for('home') }}" class="{{ 'active' if request.endpoint == 'home' }}">My lifts</a>
+          <a href="{{ url_for('team') }}" class="{{ 'active' if request.endpoint == 'team' }}">Team</a>
+        </nav>
+        <div class="account">
+          <form method="POST" action="{{ url_for('set_unit') }}" class="unit-toggle" aria-label="Units">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="next" value="{{ request.path }}">
+            {% for option in ('kg', 'lb') %}
+              <button type="submit" name="unit" value="{{ option }}"
+                      class="{{ 'on' if unit == option }}" aria-pressed="{{ 'true' if unit == option else 'false' }}">{{ option }}</button>
+            {% endfor %}
+          </form>
+          <span class="who">{{ user.display_name }}</span>
+          <form method="POST" action="{{ url_for('logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="link-button">Log out</button>
+          </form>
+        </div>
+      {% endif %}
+    </header>
+
+    <main>
+      {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+          <p class="flash">{{ message }}</p>
+        {% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

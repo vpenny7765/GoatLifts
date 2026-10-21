@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Team · GoatLifts{% endblock %}
+{% block content %}
+  <h1>Team PR board</h1>
+  <p class="hint">Everyone's best lifts, ranked by total. Session histories stay private to each lifter.</p>
+
+  {% if board %}
+    <div class="table-wrap">
+      <table class="board">
+        <thead>
+          <tr>
+            <th>#</th><th>Lifter</th><th class="num">Squat</th><th class="num">Bench</th>
+            <th class="num">Deadlift</th><th class="num">Total ({{ unit }})</th><th class="num">Sessions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in board %}
+            <tr class="{{ 'me' if row.id == user.id }}">
+              <td class="rank">{{ loop.index }}</td>
+              <td>{{ row.display_name }}{% if row.id == user.id %} <span class="tag">you</span>{% endif %}</td>
+              <td class="num">{{ row.squat|weight(unit) }}</td>
+              <td class="num">{{ row.bench|weight(unit) }}</td>
+              <td class="num">{{ row.deadlift|weight(unit) }}</td>
+              <td class="num strong">{{ row.total|weight(unit) }}</td>
+              <td class="num muted">{{ row.sessions }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">Best squat, bench, and deadlift can come from different sessions; total is the best single-session total.</p>
+  {% else %}
+    <p class="empty">No one has logged a session yet. <a href="{{ url_for('home') }}">Be the first.</a></p>
+  {% endif %}
+{% endblock %}

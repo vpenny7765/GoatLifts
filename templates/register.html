@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Sign up · GoatLifts{% endblock %}
+{% block content %}
+  <section class="auth-card">
+    <h1>Create your account</h1>
+    <p class="hint">You'll need the team invite code from a club officer.</p>
+    {% if errors %}
+      <ul class="errors">
+        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    <form method="POST" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Name
+        <input type="text" name="display_name" maxlength="60" required autocomplete="name"
+               placeholder="First and last name" value="{{ form.get('display_name', '') }}">
+      </label>
+      <label>Username
+        <input type="text" name="username" maxlength="30" required autocomplete="username"
+               value="{{ form.get('username', '') }}">
+      </label>
+      <label>Password
+        <input type="password" name="password" minlength="8" required autocomplete="new-password">
+      </label>
+      <label>Confirm password
+        <input type="password" name="confirm" minlength="8" required autocomplete="new-password">
+      </label>
+      <label>Team invite code
+        <input type="text" name="invite_code" required autocomplete="off"
+               value="{{ form.get('invite_code', '') }}">
+      </label>
+      <button type="submit">Create account</button>
+    </form>
+    <p class="hint">Already have one? <a href="{{ url_for('login') }}">Log in</a></p>
+  </section>
+{% endblock %}
