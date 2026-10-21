@@ -2,6 +2,8 @@
 
 A powerlifting progress tracker. Log squat, bench, and deadlift sessions, see your PRs at a glance, and watch your progression over time.
 
+**Live:** https://vp7765.pythonanywhere.com
+
 ## Features
 
 - Log a session (name, date, squat, bench, deadlift) with server-side input validation
@@ -55,7 +57,27 @@ GoatLifts/
 └── Procfile
 ```
 
-## Deploy (Render)
+## Deploy
+
+### PythonAnywhere (current host)
+
+The live site runs on PythonAnywhere's free tier, where the SQLite file sits on a persistent disk.
+
+1. In a Bash console: `git clone` this repo, then create a virtualenv and `pip install -r requirements.txt`.
+2. On the **Web** tab, add a web app with **Manual configuration** and point **Source code** and **Virtualenv** at the clone and the virtualenv.
+3. Replace the WSGI file's contents with:
+   ```python
+   import sys
+   PATH = "/home/<username>/GoatLifts"
+   if PATH not in sys.path:
+       sys.path.insert(0, PATH)
+   from app import app as application
+   ```
+4. Click **Reload**. To ship updates later: `git pull` in the console, then Reload.
+
+Free web apps must be extended from the Web tab once a month or they are disabled.
+
+### Render (alternative)
 
 1. Push this repo to GitHub.
 2. In Render, create a new **Web Service** from the repo.
