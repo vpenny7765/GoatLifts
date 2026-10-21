@@ -1,0 +1,188 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #050505;
+    color: white;
+    font-family: Arial, sans-serif;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    color: #cc0909;
+    margin-bottom: 4px;
+}
+
+h2 {
+    margin-top: 32px;
+}
+
+.tagline,
+.hint {
+    color: #999;
+    font-size: 0.9rem;
+}
+
+/* ---------- form ---------- */
+.log-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    align-items: end;
+}
+
+.log-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.log-form label:first-child {
+    grid-column: 1 / -1;
+}
+
+input,
+select {
+    background: #141414;
+    color: white;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 1rem;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #cc0909;
+}
+
+button[type="submit"] {
+    background: #cc0909;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 11px 18px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button[type="submit"]:hover {
+    background: #e01010;
+}
+
+.errors {
+    background: #2a0a0a;
+    border: 1px solid #cc0909;
+    border-radius: 6px;
+    padding: 12px 12px 12px 30px;
+    color: #ffb4b4;
+}
+
+/* ---------- lifter + PR cards ---------- */
+.lifter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.lifter-bar form {
+    margin: 0;
+}
+
+.pr-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.pr-card {
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pr-total {
+    border-color: #cc0909;
+}
+
+.pr-label {
+    color: #999;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pr-value {
+    font-size: 1.6rem;
+    font-weight: bold;
+}
+
+/* ---------- chart + table ---------- */
+.chart-wrap {
+    position: relative;
+    height: 320px;
+    background: #101010;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 10px 8px;
+    border-bottom: 1px solid #222;
+}
+
+th {
+    color: #999;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+td form {
+    margin: 0;
+}
+
+button.delete {
+    background: transparent;
+    color: #777;
+    border: none;
+    font-size: 1.3rem;
+    padding: 0 6px;
+    cursor: pointer;
+}
+
+button.delete:hover {
+    background: transparent;
+    color: #cc0909;
+}
+
+/* ---------- small screens ---------- */
+@media (max-width: 560px) {
+    .pr-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .log-form {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GoatLifts</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <h1>GoatLifts</h1>
+    <p class="tagline">Track your powerlifting progression over time.</p>
+
+    <h2>Log a Session</h2>
+    {% if errors %}
+      <ul class="errors">
+        {% for error in errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <form action="{{ url_for('log_lift') }}" method="POST" class="log-form">
+      <label>Name
+        <input type="text" name="name" maxlength="60" required
+               placeholder="First and last name" value="{{ form.get('name', '') }}">
+      </label>
+      <label>Date
+        <input type="date" id="date" name="date" value="{{ form.get('date') or today }}">
+      </label>
+      <label>Squat (kg)
+        <input type="number" name="squat" step="0.5" min="0.5" max="600" required
+               value="{{ form.get('squat', '') }}">
+      </label>
+      <label>Bench (kg)
+        <input type="number" name="bench" step="0.5" min="0.5" max="600" required
+               value="{{ form.get('bench', '') }}">
+      </label>
+      <label>Deadlift (kg)
+        <input type="number" name="deadlift" step="0.5" min="0.5" max="600" required
+               value="{{ form.get('deadlift', '') }}">
+      </label>
+      <button type="submit">Log it</button>
+    </form>
+    <p class="hint">Total is calculated for you (squat + bench + deadlift).</p>
+
+    {% if selected %}
+      <div class="lifter-bar">
+        <h2>{{ selected }}</h2>
+        {% if lifters|length > 1 %}
+          <form method="GET" action="{{ url_for('home') }}">
+            <select name="lifter" onchange="this.form.submit()" aria-label="Choose lifter">
+              {% for lifter in lifters %}
+                <option value="{{ lifter }}" {% if lifter|lower == selected|lower %}selected{% endif %}>{{ lifter }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% endif %}
+      </div>
+
+      <div class="pr-grid">
+        <div class="pr-card"><span class="pr-label">Squat PR</span><span class="pr-value">{{ prs.squat|kg }}</span></div>
+        <div class="pr-card"><span class="pr-label">Bench PR</span><span class="pr-value">{{ prs.bench|kg }}</span></div>
+        <div class="pr-card"><span class="pr-label">Deadlift PR</span><span class="pr-value">{{ prs.deadlift|kg }}</span></div>
+        <div class="pr-card pr-total"><span class="pr-label">Best Total</span><span class="pr-value">{{ prs.total|kg }}</span></div>
+      </div>
+      <p class="hint">All values in kg.</p>
+
+      <h2>Progression</h2>
+      {% if history|length >= 2 %}
+        <div class="chart-wrap"><canvas id="progress-chart"></canvas></div>
+      {% else %}
+        <p class="hint">Log at least two sessions to see your progression chart.</p>
+      {% endif %}
+
+      <h2>History</h2>
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Squat</th><th>Bench</th><th>Deadlift</th><th>Total</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for row in history %}
+            <tr>
+              <td>{{ row.logged_on }}</td>
+              <td>{{ row.squat|kg }}</td>
+              <td>{{ row.bench|kg }}</td>
+              <td>{{ row.deadlift|kg }}</td>
+              <td>{{ row.total|kg }}</td>
+              <td>
+                <form action="{{ url_for('delete_entry', entry_id=row.id) }}" method="POST"
+                      onsubmit="return confirm('Delete this entry?');">
+                  <button type="submit" class="delete" aria-label="Delete entry">&times;</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="hint">No sessions logged yet. Add your first one above.</p>
+    {% endif %}
+
+    <script>
+      // Default the date to the viewer's local day (the server only knows UTC).
+      (function () {
+        var dateInput = document.getElementById('date');
+        if (dateInput && !{{ 'true' if form.get('date') else 'false' }}) {
+          dateInput.value = new Date().toLocaleDateString('en-CA');
+        }
+      })();
+    </script>
+
+    {% if chart and history|length >= 2 %}
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+      <script>
+        var data = {{ chart | tojson }};
+        Chart.defaults.color = '#bbbbbb';
+        Chart.defaults.borderColor = '#2a2a2a';
+        new Chart(document.getElementById('progress-chart'), {
+          type: 'line',
+          data: {
+            labels: data.labels,
+            datasets: [
+              { label: 'Squat',    data: data.squat,    borderColor: '#cc0909', backgroundColor: '#cc0909', tension: 0.2 },
+              { label: 'Bench',    data: data.bench,    borderColor: '#e8a020', backgroundColor: '#e8a020', tension: 0.2 },
+              { label: 'Deadlift', data: data.deadlift, borderColor: '#4aa3ff', backgroundColor: '#4aa3ff', tension: 0.2 },
+              { label: 'Total',    data: data.total,    borderColor: '#ffffff', backgroundColor: '#ffffff', borderDash: [6, 4], tension: 0.2 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { title: { display: true, text: 'kg' } } }
+          }
+        });
+      </script>
+    {% endif %}
+  </body>
+</html>
